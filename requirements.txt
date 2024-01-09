@@ -1,3 +1,5 @@
 sqlalchemy
 fastapi
+strawberry-graphql
 strawberry-graphql[fastapi]
+uvicorn

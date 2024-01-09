@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 import strawberry
+from strawberry.asgi import GraphQL
+from strawberry.fastapi import GraphQLRouter
 
 
 
@@ -47,11 +49,24 @@ class Mutation:
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
+# graphql_app = GraphQL(schema)
+graphql_app = GraphQLRouter(schema)
+
+app.include_router(graphql_app, prefix="/graphql")
+
+@app.get("/")
+def hello():
+    return "hello"
 
 @app.get("/test")
 def test_endpoint():
     return {"message": "working"}
 
-@app.post("/graphql")
-async def graphql(request: Request, db: Session = Depends(get_db)):
-    return await GraphQL(schema, context={"db": db}).__call__(request)
+
+# @app.post("/graphql")
+# async def graphql(request: Request, db: Session = Depends(get_db)):
+#     return await GraphQL(schema, context={"db": db}).__call__(request)
+
+
+if __name__ == "__main__":
+    app.run()
