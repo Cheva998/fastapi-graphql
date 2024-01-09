@@ -1,43 +1,73 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import DeclarativeMeta
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
 import strawberry
 from strawberry.asgi import GraphQL
 from strawberry.fastapi import GraphQLRouter
-
+from strawberry import ID
+from typing import List
+from models import Item, SessionLocal
+from schemas import ItemType, PaginationInput
 
 
 print('creating app ...')
 app = FastAPI()
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///.example.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autofluxh=False, bing=engine)
-Base: DeclarativeMeta = declarative_base()
 
 def get_db(request: Request):
     return request.state.db
 
-class Item(Base):
-    __tablename__= 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
+### Resolvers ####
+class QueryResolver:
+    @staticmethod
+    def get_item_by_id(item_id: ID) -> (ItemType | None):
+        db = SessionLocal()
+        try:
+            item = db.query(Item)\
+              .filter(Item.id == item_id)\
+              .first()
+        finally:
+            db.close()
+        return item
+    @staticmethod
+    def get_items(pagination: (PaginationInput | None) = None) -> List[ItemType]:
+        db = SessionLocal()
+        try:
+            query = db.query(Item)
+            if pagination is not None:
+                query = query\
+                  .offset(pagination.offset)\
+                  .limit(pagination.limit)
+            items = query.all()
+        finally:
+            db.close()
+        return items
 
-@strawberry.type
-class ItemType:
-    name: str
-    description: str
+class MutationResolver:
+    @staticmethod
+    def add_item(item_name: str, item_description: str) -> ItemType:
+        db = SessionLocal()
+        try:
+            item = Item(name=item_name, description=item_description)
+            db.add(item)
+            db.commit()
+            db.refresh(item)
+        finally:
+            db.close()
+        return item
 
+
+#### GraphQL types Query and Mutation ###
 @strawberry.type
 class Query:
+    items: List[ItemType] = strawberry.field(resolver=QueryResolver.get_items)
+    item_id: (ItemType | None) = strawberry.field(resolver=QueryResolver.get_item_by_id)
     @strawberry.field
     def hello(self) -> str:
         return "GraphQL query"
 
 @strawberry.type
 class Mutation:
+    add_item: ItemType = strawberry.field(resolver=MutationResolver.add_item)
+
     @strawberry.mutation
     def create_item(self, info, name: str, description: str) -> ItemType:
         db_item = Item(name=name, description=description)

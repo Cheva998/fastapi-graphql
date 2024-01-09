@@ -7,7 +7,7 @@ cursor = conn.cursor()
 # Create a table
 cursor.execute(
     """
-    CREATE TABLE items (
+    CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY,
         name TEXT,
         description TEXT
@@ -20,7 +20,7 @@ data = [
     ("test", "first testing item")
 ]
 
-cursor.execute("INSERT INTO items (name, description) VALUES (?, ?)". data)
+cursor.executemany("INSERT INTO items (name, description) VALUES (?, ?)", data)
 
 conn.commit()
 conn.close()
