@@ -1,11 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 import strawberry
-from strawberry.asgi import GraphQL
 from strawberry.fastapi import GraphQLRouter
 from strawberry import ID
 from typing import List
 from models import Item, SessionLocal
-from schemas import ItemType, PaginationInput
+from schemas import ItemType, ItemInput, PaginationInput
 
 
 print('creating app ...')
@@ -53,6 +52,22 @@ class MutationResolver:
         finally:
             db.close()
         return item
+    @staticmethod
+    def add_items(items: List[ItemInput]) -> List[ItemType]:
+        db = SessionLocal()
+        items_added = [Item(name=item.name, description=item.description) for item in items]
+        try:
+            db.add_all(items_added)
+            db.commit()
+            [db.refresh(item_added) for item_added in items_added]
+        except Exception as e:
+            db.rollback()
+            raise e
+        finally:
+            db.close()
+        return items_added
+        
+        
 
 
 #### GraphQL types Query and Mutation ###
@@ -67,19 +82,11 @@ class Query:
 @strawberry.type
 class Mutation:
     add_item: ItemType = strawberry.field(resolver=MutationResolver.add_item)
+    add_items: List[ItemType] = strawberry.field(resolver=MutationResolver.add_items)
 
-    @strawberry.mutation
-    def create_item(self, info, name: str, description: str) -> ItemType:
-        db_item = Item(name=name, description=description)
-        db = info.context['db']
-        db.add(db_item)
-        db.commit()
-        db.refresh(db_item)
-        return ItemType(name=db_item.name, description=db_item.description)
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
-# graphql_app = GraphQL(schema)
 graphql_app = GraphQLRouter(schema)
 
 app.include_router(graphql_app, prefix="/graphql")
@@ -91,11 +98,6 @@ def hello():
 @app.get("/test")
 def test_endpoint():
     return {"message": "working"}
-
-
-# @app.post("/graphql")
-# async def graphql(request: Request, db: Session = Depends(get_db)):
-#     return await GraphQL(schema, context={"db": db}).__call__(request)
 
 
 if __name__ == "__main__":

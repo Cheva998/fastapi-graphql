@@ -8,6 +8,12 @@ class ItemType:
     description: str
 
 @strawberry.input
+class ItemInput:
+    id: int
+    name: str
+    description: str
+
+@strawberry.input
 class PaginationInput:
     offset: int
     limit: int
