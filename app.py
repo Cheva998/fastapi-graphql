@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry import ID
@@ -10,9 +10,6 @@ from schemas import ItemType, ItemInput, PaginationInput
 print('creating app ...')
 app = FastAPI()
 
-
-def get_db(request: Request):
-    return request.state.db
 
 ### Resolvers ####
 class QueryResolver:
@@ -68,8 +65,6 @@ class MutationResolver:
         return items_added
         
         
-
-
 #### GraphQL types Query and Mutation ###
 @strawberry.type
 class Query:
