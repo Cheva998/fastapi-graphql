@@ -5,7 +5,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///example.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 Base: DeclarativeMeta = declarative_base()
 
 

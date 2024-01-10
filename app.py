@@ -45,7 +45,7 @@ class MutationResolver:
             item = Item(name=item_name, description=item_description)
             db.add(item)
             db.commit()
-            db.refresh(item)
+            # db.refresh(item)
         finally:
             db.close()
         return item
