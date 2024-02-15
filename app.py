@@ -94,11 +94,11 @@ def hello():
 def test_endpoint():
     return {"message": "working"}
 
-@app.get("/get_number_tasks")
-def get_number_tasks():
-    # db = SessionLocal()
-    # items = db.query(Item)
-    return 4
+@app.get("/get-number-tasks")
+def get_number_of_tasks():
+    db = SessionLocal()
+    items = db.query(Item)
+    return items
 
 if __name__ == "__main__":
     app.run()
